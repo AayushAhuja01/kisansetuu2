@@ -1,0 +1,32 @@
+# Experiment 10: one command starts MongoDB, the API and the website
+services:
+  mongo:
+    image: mongo:7
+    volumes: ["mongo-data:/data/db"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  server:
+    build: ./server
+    ports: ["5000:5000"]
+    environment:
+      MONGO_URI: mongodb://mongo:27017/kisansetu
+      JWT_SECRET: ${JWT_SECRET:?Create a .env file next to docker-compose.yml with JWT_SECRET=some-long-random-text}
+      CLIENT_URL: http://localhost:8080
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@123}
+    depends_on:
+      mongo: { condition: service_healthy }
+
+  client:
+    build:
+      context: ./client
+      args: { VITE_API_URL: "http://localhost:5000" }
+    ports: ["8080:80"]
+    depends_on:
+      server: { condition: service_healthy }
+
+volumes:
+  mongo-data:

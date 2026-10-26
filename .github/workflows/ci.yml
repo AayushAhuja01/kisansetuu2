@@ -1,0 +1,46 @@
+# Experiment 9: runs on every push and pull request
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: server } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install
+      - run: npm run lint
+      - run: npm test
+
+  client:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: client } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install
+      - run: npm run build
+        env: { VITE_API_URL: "${{ vars.API_URL }}" }
+
+  # Render and Vercel also auto-deploy from GitHub. This job only runs after CI passes,
+  # asks Render to redeploy (if you saved the hook) and then CHECKS that the API is really healthy.
+  deploy-check:
+    needs: [server, client]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      API_URL: ${{ vars.API_URL }}
+    steps:
+      - name: Trigger Render deploy
+        run: if [ -n "$HOOK" ]; then curl -fsS -X POST "$HOOK"; else echo "No RENDER_DEPLOY_HOOK secret, skipping"; fi
+      - name: Verify the API health endpoint
+        run: |
+          if [ -z "$API_URL" ]; then echo "No API_URL variable, skipping"; exit 0; fi
+          sleep 60
+          curl -fsS --retry 10 --retry-delay 15 --retry-all-errors "$API_URL/api/health"
