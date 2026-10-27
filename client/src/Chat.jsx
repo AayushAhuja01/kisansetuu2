@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
-import { api } from './api.js';
+   import { api, API_BASE } from './api.js';
 import { useLang } from './i18n.jsx';
 import { Wrap, Msg, inp, btn } from './pages.jsx';
 
@@ -21,7 +21,7 @@ export function Chat() {
       .then(r => { if (live) { setConv(r.conversation); setMsgs(r.messages); } })
       .catch(e => live && setErr(e.message));
     // 2) live updates from the socket
-    const s = io(import.meta.env.VITE_API_URL || undefined, { auth: { token } });
+       const s = io(API_BASE || undefined, { auth: { token } });
     sock.current = s;
     s.on('connect', () => { setOnline(true); s.emit('join', id, r => r?.error && setErr(r.error)); });   // also re-joins after a reconnect
     s.on('disconnect', () => setOnline(false));

@@ -1,4 +1,6 @@
-const base = import.meta.env.VITE_API_URL || '';
+// Clean the address so a trailing slash or a trailing /api in VITE_API_URL cannot break requests
+export const API_BASE = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '').replace(/\/api$/, '');
+const base = API_BASE;
 
 export async function api(path, { method = 'GET', body, token } = {}) {
   const res = await fetch(`${base}/api${path}`, {
