@@ -82,3 +82,5 @@ Docker packages the app with everything it needs, so it runs the same on any com
 
 ## 8. Changes from the previous version (no database migration needed)
 Old listings still work: new fields `category` (default Other), `description` and `images` are optional. `GET /listings` now returns `{items, total, page, pages}` instead of a plain array. The old enquiry endpoint still exists, but the chat replaces it in the interface. `images` stores URLs only; file upload is not built.
+
+CI/CD demo
